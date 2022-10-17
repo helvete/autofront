@@ -20,7 +20,7 @@ function request(method, url, data, callback) {
     xhr.onerror = xhrResult;
     xhr.open(method, url, true);
     if (method != 'GET') {
-        xhr.setRequestHeader('Content-Type', 'application/json')
+        xhr.setRequestHeader('Content-Type', 'application/json');
     }
     xhr.setRequestHeader('X-JWT-Assertion', window.afAuthHeader);
     xhr.send(data);
@@ -131,7 +131,7 @@ function logout() {
     document.getElementById("title").innerHTML = "";
     window.afAuthHeader = null;
     clear();
-    loginForm();
+    window.location.href = cleanRootUrl();
 }
 
 // TODO: use for general rendering, set title and initial content up
@@ -197,8 +197,12 @@ function spawnLink(link) {
     return wrapperSpan;
 }
 
+function cleanRootUrl() {
+    return window.location.href.replace("#", "");
+}
+
 // TODO: local dev shorthand
-var apiRoot = window.location.href.replace("#", "") + "rest";
+var apiRoot = cleanRootUrl() + "rest";
 //var apiRoot = "http://127.0.0.1:8078/invoice/rest";
 
 request("GET", apiRoot, null, root);
