@@ -1,26 +1,23 @@
-function xhrSuccess() {
+function xhrResult() {
     if (this.readyState === 4) {
-        if (this.status === 200) {
-            //console.log(this);
-            // TODO
-        } else {
-            //console.error(this.statusText);
+        if (statusIsSuccess(this.status)) {
+            console.error(this.statusText);
         }
         this.callback.apply(this, this.arguments);
     }
 }
 
-function xhrError() {
-    console.error(this.statusText);
+// TODO: verify this is sufficient
+function statusIsSuccess(status) {
+    return status < 300;
 }
 
 function request(method, url, data, callback) {
-    //url = url.replace(/(^https?:\/\/.*)(\/\/)(.*$)/, '$1/$3');
     var xhr = new XMLHttpRequest();
     xhr.callback = callback;
     xhr.arguments = Array.prototype.slice.call(arguments, 4);
-    xhr.onload = xhrSuccess;
-    xhr.onerror = xhrError;
+    xhr.onload = xhrResult;
+    xhr.onerror = xhrResult;
     xhr.open(method, url, true);
     if (method != 'GET') {
         xhr.setRequestHeader('Content-Type', 'application/json')
@@ -61,13 +58,10 @@ function loginSubmit() {
     requestObj.email = document.getElementById("input-email").value;
     requestObj.password = document.getElementById("input-password").value;
     link = JSON.parse(document.getElementById("input-meta").value);
-    //console.log(requestObj);
     request(link.method, apiRoot + link.link, JSON.stringify(requestObj), setHeader);
 }
 
 function setHeader() {
-    //console.log(this.status);
-    //console.log(this.responseText);
     response = parseResp(this.responseText);
     if (this.status != 200) {
         alert(response.code);
@@ -75,12 +69,12 @@ function setHeader() {
     }
     clear();
     window.afAuthHeader = response.jwt;
-    callRoot();
+    link = response.links[0]; // TODO
+    request(link.method, apiRoot + link.link, null, root);
 }
 
 function root() {
     response = parseResp(this.responseText);
-    //console.log(this.status);
     if (this.status == 200) {
         printRootSection(response);
         return;
@@ -95,7 +89,6 @@ function parseResp(input) {
     try {
         return JSON.parse(input);
     } catch (error) {
-        //console.log(error);
         alert("Fatal error occurred, sorry");
         throw new Error("cannot continue");
     }
@@ -109,31 +102,22 @@ function getContentArea() {
     return document.getElementById("content");
 }
 
-function getNavArea() {
-    return document.getElementById("nav");
-}
-
-function callRoot() {
-    request("GET", apiRoot, null, root, "the hell");
-}
-
+// TODO: do this dynamically only if necessary, call from printSection()
 function printRootSection(response) {
-    // TODO: leak
     document.getElementById("name").innerHTML = response.application;
     document.getElementById("title").innerHTML
         = response.application + ' | ' + response.user_name;
-    getContentArea().innerHTML = "Welcome!";
-    nav(response.links);
-}
-
-function nav(links) {
-    for (i in links) {
-        linkEl = spawnLink(links[i]);
-        getNavArea().appendChild(linkEl);
-        emptySpan = document.createElement("span");
-        emptySpan.innerHTML = "&nbsp;";
-        getNavArea().appendChild(emptySpan);
+    getContentArea().innerHTML = `Welcome ${response.user_name}!`;
+    navArea = document.getElementById("nav");
+    for (i in response.links) {
+        linkEl = spawnLink(response.links[i]);
+        navArea.appendChild(linkEl);
     }
+    linkEl = document.createElement("a");
+    linkEl.setAttribute("href", "#");
+    linkEl.setAttribute("onclick", "logout();");
+    linkEl.innerHTML = "[logout]";
+    navArea.appendChild(linkEl);
 }
 
 function redraw() {
@@ -141,9 +125,20 @@ function redraw() {
     request(link.method, apiRoot + link.link, null /*TODO*/, printSection);
 }
 
+function logout() {
+    document.getElementById("name").innerHTML = "";
+    document.getElementById("nav").innerHTML = "";
+    document.getElementById("title").innerHTML = "";
+    window.afAuthHeader = null;
+    clear();
+    loginForm();
+}
+
+// TODO: use for general rendering, set title and initial content up
+// TODO: distinguish between array and object (table vs def list) and
+// render recursively
 function printSection() {
     response = parseResp(this.responseText);
-    //console.log(response);
     tbl = document.createElement("table");
     tbl.setAttribute('border', '1');
     thead = document.createElement("thead");
@@ -158,7 +153,6 @@ function printSection() {
         }
         brow = document.createElement("tr");
         for (const [key, value] of Object.entries(response[i])) {
-            //console.log(`${key}: ${value}`);
             if (!hasHeadRow) {
                 hcell = document.createElement("th");
                 hcell.innerHTML = key;
@@ -167,12 +161,8 @@ function printSection() {
             bcell = document.createElement("td");
             if (key == "links") {
                 for (j in value) {
-                    // TODO: solve empty span shit
                     rowLink = spawnLink(value[j]);
                     bcell.appendChild(rowLink);
-                    emptySpan = document.createElement("span");
-                    emptySpan.innerHTML = "&nbsp;";
-                    bcell.appendChild(emptySpan);
                 }
             } else {
                 bcell.innerHTML = value;
@@ -201,11 +191,14 @@ function spawnLink(link) {
         linkEl.setAttribute("href", "#");
     }
     linkEl.addEventListener('click', redraw, false);
-    return linkEl;
+    wrapperSpan = document.createElement("span");
+    wrapperSpan.appendChild(linkEl);
+    wrapperSpan.appendChild(document.createTextNode(" "));
+    return wrapperSpan;
 }
 
-// TODO
-var apiRoot = window.location.href + "rest";
+// TODO: local dev shorthand
+var apiRoot = window.location.href.replace(location.hash, "") + "rest";
 //var apiRoot = "http://127.0.0.1:8078/invoice/rest";
 
-callRoot();
+request("GET", apiRoot, null, root);
