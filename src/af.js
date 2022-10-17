@@ -114,7 +114,7 @@ function printRootSection(response) {
         navArea.appendChild(linkEl);
     }
     linkEl = document.createElement("a");
-    linkEl.setAttribute("href", "#");
+    linkEl.setAttribute("href", "{() => false}");
     linkEl.setAttribute("onclick", "logout();");
     linkEl.innerHTML = "[logout]";
     navArea.appendChild(linkEl);
@@ -188,7 +188,7 @@ function spawnLink(link) {
     if (link.autoredir) {
         linkEl.setAttribute("href", apiRoot + link.link);
     } else {
-        linkEl.setAttribute("href", "#");
+        linkEl.setAttribute("href", "{() => false}");
     }
     linkEl.addEventListener('click', redraw, false);
     wrapperSpan = document.createElement("span");
@@ -198,7 +198,7 @@ function spawnLink(link) {
 }
 
 // TODO: local dev shorthand
-var apiRoot = window.location.href.replace(location.hash, "") + "rest";
+var apiRoot = window.location.href + "rest";
 //var apiRoot = "http://127.0.0.1:8078/invoice/rest";
 
 request("GET", apiRoot, null, root);
