@@ -1,6 +1,6 @@
 function xhrResult() {
     if (this.readyState === 4) {
-        if (statusIsSuccess(this.status)) {
+        if (!statusIsSuccess(this.status)) {
             console.error(this.statusText);
         }
         this.callback.apply(this, this.arguments);
@@ -198,7 +198,7 @@ function spawnLink(link) {
 }
 
 // TODO: local dev shorthand
-var apiRoot = window.location.href.replace(location.hash, "") + "rest";
+var apiRoot = window.location.href.replace("#", "") + "rest";
 //var apiRoot = "http://127.0.0.1:8078/invoice/rest";
 
 request("GET", apiRoot, null, root);
