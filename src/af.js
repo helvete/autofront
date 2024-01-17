@@ -164,6 +164,14 @@ function printSection() {
                     rowLink = spawnLink(value[j]);
                     bcell.appendChild(rowLink);
                 }
+            } else if (value !== null && typeof value === 'object') {
+                // FFS array is object in JS
+                if (Array.isArray(value)) {
+                    handleArray(value, bcell);
+                } else {
+                    // hopefully there is not more non-object objects
+                    handleObject(value, bcell);
+                }
             } else {
                 bcell.innerHTML = value;
             }
@@ -179,6 +187,40 @@ function printSection() {
     tbl.appendChild(tbody);
     clear();
     getContentArea().appendChild(tbl);
+}
+
+function handleObject(value, parent, prefix = "") {
+    div = document.createElement("div");
+    i = 0;
+    for (const [dkey, dvalue] of Object.entries(value)) {
+        i++;
+        if (!dvalue) {
+            continue;
+        }
+        span = document.createElement("div");
+        span.setAttribute('id', 'i' + i);
+        span.innerHTML = prefix + dkey + ': ';
+        if (typeof dvalue === 'object') {
+            if (Array.isArray(dvalue)) {
+                handleArray(dvalue, span);
+            } else {
+                handleObject(dvalue, span, prefix + "&nbsp");
+            }
+        } else {
+            b = document.createElement("b");
+            b.innerHTML = dvalue;
+            span.appendChild(b);
+        }
+        div.appendChild(span);
+    }
+    parent.appendChild(div);
+}
+
+function handleArray(value, parent) {
+    var moreThanOne = false;
+    for (item in value) {
+        handleObject(value[item], parent);
+    }
 }
 
 function spawnLink(link) {
