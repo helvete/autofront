@@ -167,6 +167,9 @@ function printSection() {
             } else if (value !== null && typeof value === 'object') {
                 // FFS array is object in JS
                 if (Array.isArray(value)) {
+                    if (value.length === 0) {
+                        continue;
+                    }
                     handleArray(value, bcell);
                 } else {
                     // hopefully there is not more non-object objects
@@ -203,6 +206,9 @@ function handleObject(value, div = null, prefix = "") {
         span.innerHTML = prefix + dkey + ': ';
         if (typeof dvalue === 'object' && dvalue !== null) {
             if (Array.isArray(dvalue)) {
+                if (dvalue.length === 0) {
+                    continue;
+                }
                 handleArray(dvalue, span);
             } else {
                 div.appendChild(span);
