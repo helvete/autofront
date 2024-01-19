@@ -170,7 +170,7 @@ function printSection() {
                     handleArray(value, bcell);
                 } else {
                     // hopefully there is not more non-object objects
-                    handleObject(value, bcell);
+                    bcell.appendChild(handleObject(value));
                 }
             } else {
                 bcell.innerHTML = value;
@@ -189,22 +189,24 @@ function printSection() {
     getContentArea().appendChild(tbl);
 }
 
-function handleObject(value, parent, prefix = "") {
-    div = document.createElement("div");
-    i = 0;
+function handleObject(value, div = null, prefix = "") {
+    if (div == null) {
+        div = document.createElement("div");
+    }
     for (const [dkey, dvalue] of Object.entries(value)) {
-        i++;
         if (!dvalue) {
             continue;
         }
+        i++;
         span = document.createElement("div");
-        span.setAttribute('id', 'i' + i);
+        span.setAttribute('id', 'dkey-' + i);
         span.innerHTML = prefix + dkey + ': ';
-        if (typeof dvalue === 'object') {
+        if (typeof dvalue === 'object' && dvalue !== null) {
             if (Array.isArray(dvalue)) {
                 handleArray(dvalue, span);
             } else {
-                handleObject(dvalue, span, prefix + "&nbsp");
+                div.appendChild(span);
+                handleObject(dvalue, div, prefix + "&nbsp&nbsp");
             }
         } else {
             b = document.createElement("b");
@@ -213,13 +215,17 @@ function handleObject(value, parent, prefix = "") {
         }
         div.appendChild(span);
     }
-    parent.appendChild(div);
+    return div;
 }
 
 function handleArray(value, parent) {
     var moreThanOne = false;
     for (item in value) {
-        handleObject(value[item], parent);
+        if (moreThanOne) {
+            parent.appendChild(document.createElement('hr'));
+        }
+        parent.appendChild(handleObject(value[item]));
+        moreThanOne = true;
     }
 }
 
